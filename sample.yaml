@@ -1,0 +1,69 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: user-sample
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: user-sample-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+  storageClassName: managed-nfs-storage
+  volumeMode: Filesystem
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-sample
+  namespace: user-sample
+  labels:
+    app: user-sample
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-sample-app
+  template:
+    metadata:
+      labels:
+        app: user-sample-app
+    spec:
+      containers:
+      - name: user-sample-app
+        image: gi4nks/user-sample:latest
+        ports:
+        - containerPort: 8080
+          name: openproject
+          protocol: TCP
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 600
+          timeoutSeconds: 2
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 600 # 10 minutes
+          timeoutSeconds: 2
+        volumeMounts:
+        - name: data
+          mountPath: /var/sample/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: user-sample-pvc
+      #volumes:
+      #  - name: pgdata
+      #    hostPath:
+      #      path: /opt/openproject/pgdata
+      #      type: DirectoryOrCreate
+      #  - name: assets
+      #    hostPath:
+      #      path: /opt/openproject/static
+      #      type: DirectoryOrCreate
