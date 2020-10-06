@@ -1,0 +1,5 @@
+ docker run --name ubuntu_bash --rm -i -t helloapp:v1 bash
+
+
+To build
+docker build -t helloapp:v1 .
